@@ -1,0 +1,82 @@
+---
+title: "Reproducible Research Week 2 Project"
+author: "KH"
+date: "8/6/2017"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+  
+1) Loading and preprocessing the data
+
+```{r,echo = TRUE}
+setwd("~/Desktop/coursera/reproducible research/week 2 project")
+activitydata <- read.csv("activity.csv", header = TRUE, sep = ",")
+head(activitydata)
+```
+
+2) What is mean total number of steps taken per day?
+```{r,echo = TRUE,message=FALSE}
+library(dplyr)
+out1 = activitydata %>% group_by(date) %>% summarise_each(funs(sum),steps)
+hist(out1$steps,breaks=50)
+meansteps <- mean(out1$steps,na.rm = TRUE)
+mediansteps <- median(out1$steps,na.rm = TRUE)
+```
+
+The mean total number of steps taken per day is: `r format(meansteps, digits = 5)`
+
+The median total number of steps taken per day is: `r format(mediansteps, digits = 5)`
+
+3) What is the average daily activity pattern?
+```{r,echo = TRUE,message=FALSE}
+out2 = activitydata %>% group_by(interval) %>% summarise_each(funs(mean(., na.rm = TRUE)),steps)
+plot(out2$interval, out2$steps, type="l")
+```
+
+The maximum numbers of average steps is 206.17 and it occurs at time interval 835.  
+
+4) Imputing missing values
+```{r,echo = TRUE,message=FALSE}
+nummissing <- length(which(is.na(activitydata$steps)))
+```
+The number of missing values is: `r nummissing`
+
+Now fill in missing data, and plot histogram
+```{r,echo = TRUE,message=FALSE,warning=FALSE}
+library(Hmisc)
+imputedactivitydata <- activitydata
+imputedactivitydata$steps <- impute(activitydata$steps, fun=mean)
+newout1 = imputedactivitydata %>% group_by(date) %>% summarise_each(funs(sum),steps)
+hist(newout1$steps,breaks=50)
+newmeansteps <- mean(newout1$steps,na.rm = TRUE)
+newmediansteps <- median(newout1$steps,na.rm = TRUE)
+```
+The mean total number of steps using imputed data  is: `r format(newmeansteps, digits = 7)`
+
+The median total number of steps using imputed data is: `r format(newmediansteps, digits = 7)`
+
+There is very little impact of imputing missing data on the estimates of the total daily number of steps.  
+
+5) Are there differences in activity patterns between weekdays and weekends?
+
+Plot the average number of steps taken, averaged across all weekday days or weekend days.   
+```{r,echo = TRUE,message=FALSE,warning=FALSE}
+library(chron)
+imputedactivitydata$weekend = chron::is.weekend(imputedactivitydata$date)
+data_we <- subset(imputedactivitydata, weekend == TRUE)
+data_wd <- subset(imputedactivitydata, weekend == FALSE)
+out2_we = data_we %>% group_by(interval) %>% summarise_each(funs(mean(., na.rm = TRUE)),steps)
+out2_wd = data_wd %>% group_by(interval) %>% summarise_each(funs(mean(., na.rm = TRUE)),steps)
+plot(out2_we$interval, out2_we$steps, type="l")
+plot(out2_wd$interval, out2_wd$steps, type="l")
+```
+
+There is a difference in activity patterns between weekdays and weekends. Weekend activity is more consistently high across the whole day, while weekday activity spikes early in the day.  
+
+
+
+
+
+
